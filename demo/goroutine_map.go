@@ -21,7 +21,7 @@ func GoroutineMapErr() {
 }
 
 // Go1.9以后版本，可以使用 sync.Map
-func GoroutineMapSafety() {
+func GoroutineMapSafety1() {
 	var m sync.Map
 
 	go func() {
@@ -30,5 +30,24 @@ func GoroutineMapSafety() {
 
 	go func() {
 		m.Load(1)
+	}()
+}
+
+var lock sync.RWMutex
+
+// 使用读写锁
+func GoroutineMapSafety2() {
+	m := make(map[int]int)
+
+	go func() {
+		lock.Lock()
+		m[1] = 1
+		lock.Unlock()
+	}()
+
+	go func() {
+		lock.RLock()
+		_ = m[1]
+		lock.RUnlock()
 	}()
 }
