@@ -20,17 +20,19 @@ func GoroutineMapErr() {
 	select {}
 }
 
-// Go1.9以后版本，可以使用 sync.Map
+// Go1.9以后版本，可以使用 sync.Map，只对读多写少的场景有效率提升
 func GoroutineMapSafety1() {
 	var m sync.Map
 
-	go func() {
-		m.Store(1, 1)
-	}()
+	for i := 0; i < 10000; i++ {
+		go func() {
+			m.Store(1, 1)
+		}()
 
-	go func() {
-		m.Load(1)
-	}()
+		go func() {
+			m.Load(1)
+		}()
+	}
 }
 
 var lock sync.RWMutex
@@ -39,15 +41,17 @@ var lock sync.RWMutex
 func GoroutineMapSafety2() {
 	m := make(map[int]int)
 
-	go func() {
-		lock.Lock()
-		m[1] = 1
-		lock.Unlock()
-	}()
+	for i := 0; i < 10000; i++ {
+		go func() {
+			lock.Lock()
+			m[1] = 1
+			lock.Unlock()
+		}()
 
-	go func() {
-		lock.RLock()
-		_ = m[1]
-		lock.RUnlock()
-	}()
+		go func() {
+			lock.RLock()
+			_ = m[1]
+			lock.RUnlock()
+		}()
+	}
 }
